@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <sndfile.h>
 
+#define FILE_LEN 190
 #define BUFFER_LEN 1024
 #define	MAX_CHANNELS 6
 
@@ -49,39 +50,53 @@ process_data (double *data, int count, int channels)
 // Returns a string formated with date/time.wav
 char *rand_name(char *string) {
     time_t t = time(NULL);
+    srand((unsigned) time(&t) + 420);
     struct tm tm = *localtime(&t);
-    sprintf(string, "output_%d-%02d-%02d %02d:%02d:%02d", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
-    return string;
+    // sprintf(string, "output_%d-%02d-%02d %02d:%02d:%02d.wav", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec + 420);
+    sprintf(string, "output_%d.wav", rand());
+    return 0;
+}
+
+int makefile(SNDFILE *infile, SNDFILE *outfile, SF_INFO sf_info) {
+        int i = 0;
+        int x = 1;
+        int readcount;
+        static double data[BUFFER_LEN];
+        char *name = malloc(sizeof(char) * 100);
+
+        while ((readcount = sf_read_double(infile, data, BUFFER_LEN))) {
+            process_data(data, readcount, sf_info.channels);
+            sf_write_double (outfile, data, readcount);
+            if (i >= FILE_LEN)
+            {
+                sf_close(outfile);
+                sprintf(name, "output_%d.wav", x);
+                printf("filename = %s\n", name);
+                outfile = sf_open(name, SFM_WRITE, &sf_info);
+                x++;
+                i = 0;
+            }
+            i++;
+        }
+        if (i < FILE_LEN)
+        {
+            sf_close(outfile);
+        }
 }
 
 int flow(char* file_name) {
     SNDFILE *infile, *outfile;
     SF_INFO sf_info;
-    static double data [BUFFER_LEN];
-    int readcount;
-    char string[100];
 
     infile = sf_open(file_name, SFM_READ, &sf_info);
     print_sfinfo(sf_info);
-    outfile = sf_open(rand_name(string), SFM_WRITE, &sf_info);
     print_sfinfo(sf_info);
     if (infile)
     {
-        printf("Opened %s", file_name);
-        int i = 0;
-        while ((readcount = sf_read_double(infile, data, BUFFER_LEN))) {
-            i++;
-                process_data(data, readcount, sf_info.channels);
-                sf_write_double (outfile, data, readcount);
-            if (i >= 500)
-            {
-                sf_close(outfile);
-                i = 0;
-                outfile = sf_open(rand_name(string), SFM_WRITE, &sf_info);
-            }
-        }
+        outfile = sf_open("output_0.wav", SFM_WRITE, &sf_info);
+        printf("\n\nOpened %s\n", file_name);
+        makefile(infile, outfile, sf_info);
         sf_close(infile);
-        sf_close(outfile);
     }
 }
 
