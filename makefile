@@ -1,10 +1,6 @@
 .PHONY: clean
 
-SRCS		=	$(wildcard srcs/*.c)
-INC_PATHS	=	/usr/include/x86_64-linux-gnu/
-LDFLAGS		=	-lavformat -lavutil
-LD_PATH		=	-L/usr/lib/x86_64-linux-gnu/
-INC			=	-I${INC_PATHS}libavformat -I${INC_PATHS}libavutil -I/includes/
+SRCS		=	srcs/main.c
 OBJS		=	$(SRCS: .c=.o)
 CC			=	gcc
 RM			=	rm -f
@@ -12,9 +8,12 @@ EXEC		=	sample-generator
 
 all:	${EXEC}
 
+test:	all
+		./sample-generator trip.wav
+
 ${EXEC}:${OBJS}
 		@echo "Building EXEC"
-		${CC} -o $@ $^ ${INC} ${LDFLAGS} ${LD_PATH}
+		${CC} -o $@ $^ -lsndfile
 
 %.o: %.c
 		@echo "Creating objects"
@@ -22,4 +21,7 @@ ${EXEC}:${OBJS}
 
 clean:
 		${RM} *.o
+
+rem:
+		${RM} output_*
 	
