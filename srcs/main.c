@@ -19,7 +19,8 @@ int main (int argc, char** argv) {
         file_name = argv[1];
         flow(file_name);
     }
-
+    else
+        printf("Please provide a file\nsample-generator filename\n");
     return 0;
 }
 
